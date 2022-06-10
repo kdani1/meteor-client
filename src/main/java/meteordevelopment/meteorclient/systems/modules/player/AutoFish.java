@@ -30,6 +30,12 @@ public class AutoFish extends Module {
             .build()
     );
 
+    private final Setting<Boolean> safeFishing = sgGeneral.add(new BoolSetting.Builder()
+            .name("safe-fishing")
+            .description("Make autofish pause when any ingame screen pops up.")
+            .defaultValue(true)
+            .build()
+    );
     private final Setting<Integer> ticksAutoCast = sgGeneral.add(new IntSetting.Builder()
             .name("ticks-auto-cast")
             .description("The amount of ticks to wait before recasting automatically.")
@@ -80,6 +86,7 @@ public class AutoFish extends Module {
 
     private int autoCastTimer;
     private boolean autoCastEnabled;
+    private boolean safeToFish;
 
     private int autoCastCheckTimer;
 
@@ -99,6 +106,14 @@ public class AutoFish extends Module {
         SoundInstance p = event.sound;
         FishingBobberEntity b = mc.player.fishHook;
 
+        if (safeFishing.get() == true){
+            if(mc.currentScreen == null) {
+               safeToFish = true;
+            }else{
+                safeToFish = false;
+            }
+        }
+        if(safeFishing.get() == false || safeToFish == true){
         if (p.getId().getPath().equals("entity.fishing_bobber.splash")) {
             if (!splashDetectionRangeEnabled.get() || Utils.distance(b.getX(), b.getY(), b.getZ(), p.getX(), p.getY(), p.getZ()) <= splashDetectionRange.get()) {
                 ticksEnabled = true;
@@ -107,10 +122,20 @@ public class AutoFish extends Module {
             }
         }
     }
+}
 
     @EventHandler
     private void onTick(TickEvent.Post event) {
+        // Safe Fishing
+        if (safeFishing.get() == true) {
+            if (mc.currentScreen == null) {
+                safeToFish = true;
+            } else {
+                safeToFish = false;
+            }
+        }
         // Auto cast
+        if (safeToFish == true || safeFishing.get() == false) {
         if (autoCastCheckTimer <= 0) {
             autoCastCheckTimer = 30;
 
@@ -147,6 +172,7 @@ public class AutoFish extends Module {
 
         ticksToRightClick--;
     }
+}
 
     @EventHandler
     private void onKey(KeyEvent event) {
